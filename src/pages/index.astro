@@ -25,14 +25,6 @@ import projects from '../content/projects.json';
         ))}
       </div>
     </section>
-
-    <footer class="footer">
-      <hr class="footer-line" />
-      <div class="footer-links">
-        <a href="https://www.linkedin.com/in/aurelientrinder/" target="_blank" rel="noopener noreferrer">linkedin</a>
-        <a href="mailto:trinder.aurelien@gmail.com">email</a>
-      </div>
-    </footer>
   </main>
 </Layout>
 
@@ -61,7 +53,7 @@ import projects from '../content/projects.json';
   }
 
   .bio p {
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: var(--text-muted);
   }
 
@@ -77,30 +69,5 @@ import projects from '../content/projects.json';
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-  }
-
-  .footer {
-    margin-top: 3rem;
-  }
-
-  .footer-line {
-    border: none;
-    border-top: 1px dashed var(--border);
-    margin-bottom: 1rem;
-  }
-
-  .footer-links {
-    display: flex;
-    gap: 1.5rem;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-  }
-
-  .footer-links a {
-    text-decoration: none;
-  }
-
-  .footer-links a:hover {
-    text-decoration: underline;
   }
 </style>
