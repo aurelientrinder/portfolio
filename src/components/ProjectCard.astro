@@ -1,0 +1,116 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  image?: string | string[];
+  tags?: string[];
+  demo?: string;
+  github?: string;
+}
+
+const { title, description, image, tags = [], demo, github } = Astro.props;
+const images = Array.isArray(image) ? image : (image ? [image] : []);
+---
+
+<article class="card">
+  {images.length > 0 && (
+    <div class="card-images">
+      {images.map((img) => (
+        <img src={img} alt={title} loading="lazy" />
+      ))}
+    </div>
+  )}
+  <div class="card-content">
+    <h2 class="card-title">{title}</h2>
+    <p class="card-description">{description}</p>
+    {tags.length > 0 && (
+      <div class="card-tags">
+        {tags.map((tag) => (
+          <span class="tag">{tag}</span>
+        ))}
+      </div>
+    )}
+    {(demo || github) && (
+      <div class="card-links">
+        {demo && <a href={demo} target="_blank" rel="noopener">Live Demo</a>}
+        {github && <a href={github} target="_blank" rel="noopener">GitHub</a>}
+      </div>
+    )}
+  </div>
+</article>
+
+<style>
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .card-images {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    padding-bottom: 0;
+  }
+
+  .card-images img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-content {
+    padding: 1.25rem;
+  }
+
+  .card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-description {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .tag {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: var(--bg);
+    padding: 0.125rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .card-links {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+  }
+
+  .card-links a {
+    color: var(--text);
+  }
+
+  .card-links a:hover {
+    text-decoration: underline;
+  }
+</style>

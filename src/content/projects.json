@@ -1,0 +1,29 @@
+[
+  {
+    "title": "Chain Tensionner",
+    "description": "I designed, simulated, manufactured and tested a chain tensionner assembly design for our TIM09 ethanol-powered car. Our previous chain tensionner was a makeshift attempt at a short-term fix that was sufficient at the time, but lacked intentionnal purpose, was too heavy and not properly designed or fabricated. I therefore chose an elegant, simple, lightweight and cheap design that was extensively tested in FEM analysis using SimScale, and then manufactured it almost entirely myself. Some of the parts were fabricated on the lathe in materials such as Brass and Aluminium, while others were draped in carbon fiber and vaccum-sealed.",
+    "image": "/projects/tensionner_final.png",
+    "tags": [],
+    "demo": null,
+    "github": null
+  },
+  {
+    "title": "Connecting Rod",
+    "description": "I also manufactured a connecting rod for a new engine my team and I are in the process of building on a 3 axis mill using a custom support designed and manufactured to enable precise manufacturing of multiple connecting rods (if necessary)",
+    "image": [
+      "/projects/connecting_rod.png",
+      "/projects/connecting_rod_support.png"
+    ],
+    "tags": [],
+    "demo": null,
+    "github": null
+  },
+  {
+    "title": "Intake Bellmouth",
+    "description": "I'm currently in the process of redesigning the intake bellmouth for our team's engine. That involves parametric design, extensive CFD simulations to find the optimal shape for our needs, and then manufacturing the carbon fiber bellmouth including its mold. I expect this project to take a little while in order for it to exceed both my team and I's expectations and needs.",
+    "image": "/projects/bellmouth.png",
+    "tags": [],
+    "demo": null,
+    "github": null
+  }
+]

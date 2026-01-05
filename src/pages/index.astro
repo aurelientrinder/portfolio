@@ -1,0 +1,73 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import projects from '../content/projects.json';
+---
+
+<Layout>
+  <main class="container">
+    <header class="header">
+      <h1 class="title">aurelien trinder's portfolio</h1>
+    </header>
+
+    <section class="bio">
+      <p>
+        Aurelien Trinder, 19 years old, I love designing, making and testing things such as parts for a homemade 27cc 1 cylinder ethanol-powered engine my team and I are working on at <a href="https://www.timupsinsa.com/" target="_blank" rel="noopener noreferrer">TIMUPINSA</a>, with whom I am a volunteer engineer.<br>
+        I also love space, the idea that we're not alone in our universe, and the pursuit of knowledge. I'm a big fan of this quote by Arthur C Clarke that states <em>"Any sufficiently advanced technology is indistinguishable from magic"</em>. 
+      </p>
+    </section>
+
+    <section class="projects">
+      <h2 class="section-title">projects</h2>
+      <div class="projects-grid">
+        {projects.map((project) => (
+          <ProjectCard {...project} />
+        ))}
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 4rem 1rem;
+  }
+
+  .header {
+    margin-bottom: 2.5rem;
+  }
+
+  .title {
+    font-size: 2rem;
+    font-weight: normal;
+    letter-spacing: 0.02em;
+    text-transform: lowercase;
+  }
+
+  .bio {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .bio p {
+    font-size: 1rem;
+    color: var(--text-muted);
+  }
+
+  .section-title {
+    font-size: 1.75rem;
+    font-weight: normal;
+    text-transform: lowercase;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  .projects-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+</style>
