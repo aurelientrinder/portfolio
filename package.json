@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && node scripts/fix-paths.js",
+    "build": "astro build",
+    "build:local": "astro build && node scripts/fix-paths.js",
     "preview": "astro preview"
   },
   "dependencies": {
