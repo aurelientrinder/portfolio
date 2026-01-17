@@ -6,29 +6,33 @@ import projects from '../content/projects.json';
 
 <Layout>
   <main class="container">
-    <header class="header">
-      <h1 class="title">aurelien trinder's portfolio</h1>
+    <header class="header animate-fade-in">
+      <h1 class="title mono">aurelien trinder</h1>
+      <p class="subtitle mono">engineer & designer</p>
     </header>
 
-    <section class="bio">
+    <section class="bio animate-fade-in" style="animation-delay: 0.15s;">
       <p>
-        Aurelien Trinder, 19 years old, I love designing, making and testing things such as parts for a homemade 27cc 1 cylinder ethanol-powered engine my team and I are working on at <a href="https://www.timupsinsa.com/" target="_blank" rel="noopener noreferrer">TIMUPINSA</a>, with whom I am a volunteer engineer.<br>
-        I also love space, the idea that we're not alone in our universe, and the pursuit of knowledge. I'm a big fan of this quote by Arthur C Clarke that states <em>"Any sufficiently advanced technology is indistinguishable from magic"</em>. 
+        I'm <span class="highlight">Aurelien Trinder</span>, a 19-year-old engineer driven by the pursuit of technical excellence and the wonders of discovery. Currently, I'm a volunteer engineer at <a href="https://www.timupsinsa.com/" target="_blank" rel="noopener noreferrer" class="subtle-link">TIMUPINSA</a>, where my team and I are developing a homemade 27cc 1-cylinder ethanol-powered engine.
+      </p>
+      <p>
+        I find fascination in the vastness of space and the idea that our universe still holds countless mysteries. I'm guided by Arthur C. Clarke's observation: <em class="quote">"Any sufficiently advanced technology is indistinguishable from magic."</em>
       </p>
     </section>
 
     <section class="projects">
-      <h2 class="section-title">projects</h2>
+      <h2 class="section-title mono animate-fade-in" style="animation-delay: 0.3s;">selected work</h2>
       <div class="projects-grid">
-        {projects.map((project) => (
-          <ProjectCard {...project} />
+        {projects.map((project, index) => (
+          <div class="animate-fade-in" style={`animation-delay: ${0.45 + index * 0.15}s;`}>
+            <ProjectCard {...project} />
+          </div>
         ))}
       </div>
     </section>
 
-    <footer class="footer">
-      <hr class="footer-line" />
-      <div class="footer-links">
+    <footer class="footer animate-fade-in" style="animation-delay: 0.8s;">
+      <div class="footer-links mono">
         <a href="https://www.linkedin.com/in/aurelientrinder/" target="_blank" rel="noopener noreferrer">linkedin</a>
         <a href="mailto:trinder.aurelien@gmail.com">email</a>
       </div>
@@ -38,69 +42,118 @@ import projects from '../content/projects.json';
 
 <style>
   .container {
-    max-width: 700px;
+    max-width: var(--container-width);
     margin: 0 auto;
-    padding: 4rem 1rem;
+    padding: 8rem 2rem;
   }
 
   .header {
-    margin-bottom: 2.5rem;
+    margin-bottom: 6rem;
   }
 
   .title {
-    font-size: 2rem;
-    font-weight: normal;
-    letter-spacing: 0.02em;
-    text-transform: lowercase;
+    font-family: var(--font-sans);
+    font-size: 3.5rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    background: linear-gradient(to bottom, var(--text) 60%, var(--text-muted));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 500;
   }
 
   .bio {
-    margin-bottom: 3rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px dashed var(--border);
+    margin-bottom: 8rem;
+    max-width: 680px;
   }
 
   .bio p {
-    font-size: 1rem;
+    font-size: 1.15rem;
     color: var(--text-muted);
+    margin-bottom: 2rem;
+    line-height: 1.7;
+    font-weight: 400;
+  }
+
+  .highlight {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .quote {
+    color: var(--text-muted);
+    font-style: italic;
+    background: rgba(125, 125, 125, 0.1);
+    padding: 0 0.25rem;
+    border-radius: 4px;
   }
 
   .section-title {
-    font-size: 1.75rem;
-    font-weight: normal;
-    text-transform: lowercase;
-    margin-bottom: 1.5rem;
-    letter-spacing: 0.02em;
-  }
-
-  .projects-grid {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 3rem;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 1.5rem;
   }
 
-  .footer {
-    margin-top: 3rem;
+  .section-title::after {
+    content: '';
+    height: 1px;
+    background: linear-gradient(to right, var(--border), transparent);
+    flex-grow: 1;
   }
 
-  .footer-line {
-    border: none;
-    border-top: 1px dashed var(--border);
-    margin-bottom: 1rem;
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 3rem;
+  }
+
+  .footer {
+    margin-top: 10rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--border);
   }
 
   .footer-links {
     display: flex;
-    gap: 1.5rem;
-    font-size: 0.9rem;
-    color: var(--text-muted);
+    gap: 3rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
   }
 
   .footer-links a {
-    text-decoration: underline;
+    color: var(--text-muted);
   }
 
   .footer-links a:hover {
-    opacity: 0.7;
+    color: var(--accent);
+  }
+
+  .subtle-link {
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+
+  .subtle-link:hover {
+    color: var(--text);
+    border-bottom-color: var(--text);
   }
 </style>
