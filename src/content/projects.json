@@ -3,7 +3,7 @@
     "title": "Chain Tensionner",
     "description": "Custom chain tensionner assembly for our TIM09 ethanol-powered car — designed, simulated, manufactured and tested.",
     "fullDescription": "I designed, simulated, manufactured and tested a chain tensionner assembly design for our TIM09 ethanol-powered car. Our previous chain tensionner was a makeshift attempt at a short-term fix that was sufficient at the time, but lacked intentional purpose, was too heavy and not properly designed or fabricated.\n\nI therefore chose an elegant, simple, lightweight and cheap design that was extensively tested in FEM analysis using SimScale, and then manufactured it almost entirely myself. Some of the parts were fabricated on the lathe in materials such as Brass and Aluminium, while others were draped in carbon fiber and vacuum-sealed.",
-    "image": "/projects/tensionner_final.png",
+    "image": "/projects/tensionner_final.jpg",
     "tags": [],
     "demo": null,
     "github": null
@@ -13,8 +13,8 @@
     "description": "Custom connecting rod manufactured on a 3-axis mill with a purpose-built support fixture.",
     "fullDescription": "I manufactured a connecting rod for a new engine my team and I are in the process of building on a 3-axis mill. To enable precise and repeatable manufacturing, I designed and fabricated a custom support fixture.\n\nThis support allows for accurate positioning and clamping of the rod during machining operations, and enables the production of multiple connecting rods if necessary.",
     "image": [
-      "/projects/connecting_rod.png",
-      "/projects/connecting_rod_support.png"
+      "/projects/connecting_rod.jpg",
+      "/projects/connecting_rod_support.jpg"
     ],
     "tags": [],
     "demo": null,

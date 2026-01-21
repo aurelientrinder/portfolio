@@ -73,8 +73,30 @@ const firstImage = Array.isArray(firstProject?.image)
     const backdrop = modal?.querySelector('.modal-backdrop');
     const container = modal?.querySelector('.modal-container');
 
+    // Preload images on hover for faster modal opening
+    function preloadImages(images: string[]) {
+      images.forEach(src => {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = src;
+        // Check if not already preloaded
+        if (!document.querySelector(`link[href="${src}"]`)) {
+          document.head.appendChild(link);
+        }
+      });
+    }
+
     // Open modal when card is clicked
     document.querySelectorAll('.card[data-project]').forEach(card => {
+      // Preload images on hover
+      card.addEventListener('mouseenter', () => {
+        const projectData = JSON.parse(card.getAttribute('data-project') || '{}');
+        if (projectData.images?.length) {
+          preloadImages(projectData.images);
+        }
+      });
+
       card.addEventListener('click', (e) => {
         const projectData = JSON.parse(card.getAttribute('data-project') || '{}');
         openModal(projectData);
@@ -101,13 +123,36 @@ const firstImage = Array.isArray(firstProject?.image)
         .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
         .join('');
       
-      // Add images
+      // Add images with animation reset - use eager loading since modal is visible immediately
       modalImages.innerHTML = (project.images || [])
         .map(img => `
           <div class="modal-img-wrapper">
-            <img src="${img}" alt="${project.title}" loading="lazy" />
+            <img 
+              src="${img}" 
+              alt="${project.title}" 
+              width="1600" 
+              height="900" 
+              loading="eager" 
+              decoding="async"
+            />
           </div>
         `).join('');
+      
+      // Reset animations by triggering reflow
+      const modalBody = modal.querySelector('.modal-body') as HTMLElement;
+      const imgWrappers = modalImages.querySelectorAll('.modal-img-wrapper');
+      
+      imgWrappers.forEach((wrapper) => {
+        (wrapper as HTMLElement).style.animation = 'none';
+        (wrapper as HTMLElement).offsetHeight; // Trigger reflow
+        (wrapper as HTMLElement).style.animation = '';
+      });
+      
+      if (modalBody) {
+        modalBody.style.animation = 'none';
+        modalBody.offsetHeight; // Trigger reflow
+        modalBody.style.animation = '';
+      }
       
       // Add tags
       if (project.tags && project.tags.length > 0) {
@@ -139,9 +184,15 @@ const firstImage = Array.isArray(firstProject?.image)
 
     function closeModal() {
       if (!modal) return;
+      modal.classList.add('closing');
       modal.classList.remove('active');
-      modal.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
+      
+      // Wait for closing animation to complete
+      setTimeout(() => {
+        modal.classList.remove('closing');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }, 300);
     }
 
     // Close modal when clicking backdrop
@@ -275,8 +326,10 @@ const firstImage = Array.isArray(firstProject?.image)
     color: var(--text);
     border-bottom-color: var(--text);
   }
+</style>
 
-  /* Modal Styles */
+<style is:global>
+  /* Modal Styles - must be global for dynamically created content */
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -287,7 +340,7 @@ const firstImage = Array.isArray(firstProject?.image)
     padding: 2rem;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.4s ease, visibility 0.4s ease;
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .modal-overlay.active {
@@ -295,29 +348,50 @@ const firstImage = Array.isArray(firstProject?.image)
     visibility: visible;
   }
 
+  .modal-overlay.closing {
+    opacity: 0;
+    visibility: visible;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 1, 1), visibility 0.3s cubic-bezier(0.4, 0, 1, 1);
+  }
+
+  .modal-overlay.closing .modal-container {
+    transform: scale(0.95) translateY(20px);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 1, 1), opacity 0.25s cubic-bezier(0.4, 0, 1, 1);
+  }
+
+  .modal-overlay.closing .modal-backdrop {
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 1, 1);
+  }
+
   .modal-backdrop {
     position: absolute;
     inset: 0;
     background: var(--bg);
     opacity: 0;
-    transition: opacity 0.4s ease;
+    backdrop-filter: blur(0px);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), backdrop-filter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .modal-overlay.active .modal-backdrop {
-    opacity: 0.97;
+    opacity: 0.92;
+    backdrop-filter: blur(20px);
   }
 
   .modal-container {
     position: relative;
     width: 100%;
-    max-width: 640px;
+    max-width: 680px;
     max-height: calc(100vh - 4rem);
     overflow-y: auto;
-    transform: scale(0.96) translateY(20px);
+    overflow-x: hidden;
+    border-radius: 24px;
+    transform: scale(0.92) translateY(40px);
     opacity: 0;
     transition: 
-      transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-      opacity 0.4s ease;
+      transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .modal-overlay.active .modal-container {
@@ -326,27 +400,54 @@ const firstImage = Array.isArray(firstProject?.image)
   }
 
   .modal-content {
-    background: var(--bg);
+    background: var(--card-bg);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    box-shadow: 
+      0 4px 6px -1px rgba(0, 0, 0, 0.05),
+      0 20px 40px -15px rgba(0, 0, 0, 0.1),
+      0 40px 80px -30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
   }
 
   .modal-images {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    margin-bottom: 2rem;
+    padding: 1.5rem;
+    padding-bottom: 0;
   }
 
   .modal-img-wrapper {
     overflow: hidden;
-    border-radius: 16px;
+    border-radius: 16px !important;
     border: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.03);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    transform: translateY(20px);
+    opacity: 0;
+    animation: modalImageFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    aspect-ratio: 16 / 9;
+  }
+
+  .modal-img-wrapper:nth-child(1) { animation-delay: 0.1s; }
+  .modal-img-wrapper:nth-child(2) { animation-delay: 0.2s; }
+  .modal-img-wrapper:nth-child(3) { animation-delay: 0.3s; }
+  .modal-img-wrapper:nth-child(4) { animation-delay: 0.4s; }
+
+  @keyframes modalImageFadeIn {
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 
   .modal-img-wrapper img {
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
     display: block;
-    border-radius: 16px;
+    border-radius: 0 !important;
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
@@ -355,14 +456,24 @@ const firstImage = Array.isArray(firstProject?.image)
   }
 
   .modal-body {
-    padding: 0;
+    padding: 2rem;
+    transform: translateY(20px);
+    opacity: 0;
+    animation: modalBodyFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+  }
+
+  @keyframes modalBodyFadeIn {
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 
   .modal-title {
     font-family: var(--font-sans);
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
     color: var(--text);
     letter-spacing: -0.02em;
     line-height: 1.3;
@@ -371,11 +482,11 @@ const firstImage = Array.isArray(firstProject?.image)
   .modal-description {
     color: var(--text-muted);
     font-size: 1rem;
-    line-height: 1.7;
+    line-height: 1.75;
   }
 
   .modal-description p {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
   }
 
   .modal-description p:last-child {
@@ -386,45 +497,59 @@ const firstImage = Array.isArray(firstProject?.image)
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-top: 1.5rem;
+    margin-top: 1.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
   }
 
   .modal-tags .tag {
     font-size: 0.7rem;
     color: var(--text-muted);
-    background: var(--card-bg);
-    padding: 0.25rem 0.75rem;
-    border-radius: 4px;
+    background: var(--bg);
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
     border: 1px solid var(--border);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .modal-tags .tag:hover {
+    background: var(--card-bg);
+    border-color: var(--text-muted);
   }
 
   .modal-links {
     display: flex;
-    gap: 1.5rem;
-    font-size: 0.75rem;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border);
+    gap: 1rem;
+    font-size: 0.8rem;
+    margin-top: 1.75rem;
   }
 
   .modal-links a {
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-    transition: color 0.2s ease;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    background: var(--bg);
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .modal-links a:hover {
-    color: var(--text);
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
   /* Minimal scrollbar */
   .modal-container::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
   }
 
   .modal-container::-webkit-scrollbar-track {
@@ -433,16 +558,48 @@ const firstImage = Array.isArray(firstProject?.image)
 
   .modal-container::-webkit-scrollbar-thumb {
     background: var(--border);
-    border-radius: 2px;
+    border-radius: 3px;
+  }
+
+  .modal-container::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
   }
 
   @media (max-width: 600px) {
     .modal-overlay {
+      padding: 1rem;
+    }
+
+    .modal-container {
+      border-radius: 20px;
+    }
+
+    .modal-content {
+      border-radius: 20px;
+    }
+
+    .modal-images {
+      padding: 1rem;
+    }
+
+    .modal-img-wrapper {
+      border-radius: 12px !important;
+    }
+
+    .modal-body {
       padding: 1.5rem;
     }
 
     .modal-title {
-      font-size: 1.25rem;
+      font-size: 1.35rem;
+    }
+
+    .modal-links {
+      flex-direction: column;
+    }
+
+    .modal-links a {
+      text-align: center;
     }
   }
 </style>
