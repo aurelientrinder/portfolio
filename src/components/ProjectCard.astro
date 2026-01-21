@@ -2,24 +2,53 @@
 interface Props {
   title: string;
   description: string;
+  fullDescription?: string;
   image?: string | string[];
   tags?: string[];
   demo?: string;
   github?: string;
+  isAboveFold?: boolean;
 }
 
-const { title, description, image, tags = [], demo, github } = Astro.props;
+const { title, description, fullDescription, image, tags = [], demo, github, isAboveFold = false } = Astro.props;
 const images = Array.isArray(image) ? image : (image ? [image] : []);
+
+// Prepare data for modal
+const projectData = JSON.stringify({
+  title,
+  description: fullDescription || description,
+  images,
+  tags,
+  demo,
+  github
+});
 ---
 
-<article class="card glass animate-fade-in">
+<article 
+  class="card glass animate-fade-in" 
+  data-project={projectData}
+  tabindex="0"
+  role="button"
+  aria-label={`View details for ${title}`}
+>
   {images.length > 0 && (
     <div class="card-images">
-      {images.map((img) => (
-        <div class="img-wrapper">
-          <img src={img} alt={title} loading="lazy" />
-        </div>
-      ))}
+      {images.slice(0, 1).map((img, index) => {
+        const shouldEagerLoad = isAboveFold && index === 0;
+        return (
+          <div class="img-wrapper">
+            <img
+              src={img}
+              alt={title}
+              width="1600"
+              height="900"
+              loading={shouldEagerLoad ? "eager" : "lazy"}
+              fetchpriority={shouldEagerLoad ? "high" : "auto"}
+              decoding="async"
+            />
+          </div>
+        );
+      })}
     </div>
   )}
   <div class="card-content">
@@ -32,12 +61,9 @@ const images = Array.isArray(image) ? image : (image ? [image] : []);
         ))}
       </div>
     )}
-    {(demo || github) && (
-      <div class="card-links mono">
-        {demo && <a href={demo} target="_blank" rel="noopener">Live Demo →</a>}
-        {github && <a href={github} target="_blank" rel="noopener">GitHub ↗</a>}
-      </div>
-    )}
+    <div class="card-hint mono">
+      <span>Click to expand</span>
+    </div>
   </div>
 </article>
 
@@ -50,14 +76,18 @@ const images = Array.isArray(image) ? image : (image ? [image] : []);
     display: flex;
     flex-direction: column;
     position: relative;
+    cursor: pointer;
+    user-select: none;
   }
 
   .card:hover {
-    transform: translateY(-6px);
-    box-shadow: 
-      0 20px 40px -5px rgba(0, 0, 0, 0.1),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-    background: color-mix(in srgb, var(--card-bg), white 8%);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+  }
+
+  .card:focus {
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
   }
 
   .card-images {
@@ -110,7 +140,7 @@ const images = Array.isArray(image) ? image : (image ? [image] : []);
     color: var(--text-muted);
     font-size: 0.95rem;
     line-height: 1.6;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     flex-grow: 1;
   }
 
@@ -118,13 +148,13 @@ const images = Array.isArray(image) ? image : (image ? [image] : []);
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
   }
 
   .tag {
     font-size: 0.7rem;
     color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg);
     padding: 0.25rem 0.75rem;
     border-radius: 6px;
     border: 1px solid var(--border);
@@ -133,27 +163,23 @@ const images = Array.isArray(image) ? image : (image ? [image] : []);
     font-weight: 500;
     transition: all 0.2s ease;
   }
-  
-  .card:hover .tag {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(0,0,0,0.1);
-  }
 
-  .card-links {
+  .card-hint {
     display: flex;
-    gap: 1.5rem;
-    font-size: 0.8rem;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     margin-top: auto;
-    border-top: 1px solid var(--border);
     padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
   }
 
-  .card-links a {
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
+  .card:hover .card-hint {
+    opacity: 1;
   }
 </style>

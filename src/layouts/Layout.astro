@@ -3,9 +3,10 @@ import '../styles/global.css';
 
 interface Props {
   title?: string;
+  preloadImage?: string;
 }
 
-const { title = 'Aurélien Trinder' } = Astro.props;
+const { title = 'Aurélien Trinder', preloadImage } = Astro.props;
 ---
 
 <!doctype html>
@@ -15,14 +16,12 @@ const { title = 'Aurélien Trinder' } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Portfolio of Aurélien Trinder" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {preloadImage && (
+      <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />
+    )}
     <title>{title}</title>
   </head>
   <body>
-    <div id="background-wrapper">
-      <div class="blob blob-1"></div>
-      <div class="blob blob-2"></div>
-      <div class="blob blob-3"></div>
-    </div>
     <slot />
   </body>
 </html>
