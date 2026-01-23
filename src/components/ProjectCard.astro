@@ -40,8 +40,6 @@ const projectData = JSON.stringify({
             <img
               src={img}
               alt={title}
-              width="1600"
-              height="900"
               loading={shouldEagerLoad ? "eager" : "lazy"}
               fetchpriority={shouldEagerLoad ? "high" : "auto"}
               decoding="async"
@@ -52,7 +50,12 @@ const projectData = JSON.stringify({
     </div>
   )}
   <div class="card-content">
-    <h2 class="card-title mono">{title}</h2>
+    <div class="card-header">
+      <h2 class="card-title mono">{title}</h2>
+      <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
     <p class="card-description">{description}</p>
     {tags.length > 0 && (
       <div class="card-tags">
@@ -61,125 +64,140 @@ const projectData = JSON.stringify({
         ))}
       </div>
     )}
-    <div class="card-hint mono">
-      <span>Click to expand</span>
-    </div>
   </div>
 </article>
 
 <style>
   .card {
-    border-radius: 24px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     height: 100%;
     display: flex;
     flex-direction: column;
     position: relative;
     cursor: pointer;
     user-select: none;
+    background: var(--card-bg);
   }
 
   .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 
+      0 20px 40px -20px rgba(0, 0, 0, 0.2),
+      0 0 0 1px var(--text-muted);
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .card:hover {
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: 
+        0 20px 40px -20px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
   }
 
   .card:focus {
     outline: 2px solid var(--text);
-    outline-offset: 2px;
+    outline-offset: 4px;
   }
 
   .card-images {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    padding: 1.25rem;
+    padding: 1rem;
     padding-bottom: 0;
   }
 
   .img-wrapper {
     overflow: hidden;
-    border-radius: 16px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
-    background: rgba(0, 0, 0, 0.05);
-    aspect-ratio: 16 / 9;
+    background: var(--accent-soft);
+    aspect-ratio: 16 / 10;
     position: relative;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   }
 
   .img-wrapper img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .card:hover .img-wrapper img {
-    transform: scale(1.05);
+    transform: scale(1.08);
   }
 
   .card-content {
-    padding: 1.75rem 1.5rem;
+    padding: 2rem 1.5rem;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
   }
 
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    gap: 1rem;
+  }
+
   .card-title {
     font-family: var(--font-sans);
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     font-weight: 600;
-    margin-bottom: 0.75rem;
     color: var(--text);
-    letter-spacing: -0.02em;
     line-height: 1.2;
+    transition: color 0.3s ease;
+  }
+
+  .arrow-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    opacity: 0.3;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+  }
+
+  .card:hover .arrow-icon {
+    opacity: 1;
+    transform: translate(2px, -2px);
   }
 
   .card-description {
     color: var(--text-muted);
-    font-size: 0.95rem;
+    font-size: 1rem;
     line-height: 1.6;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
     flex-grow: 1;
+    font-weight: 450;
   }
 
   .card-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-bottom: 1.5rem;
+    margin-top: auto;
   }
 
   .tag {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: var(--text-muted);
-    background: var(--bg);
-    padding: 0.25rem 0.75rem;
-    border-radius: 6px;
+    background: var(--accent-soft);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
     border: 1px solid var(--border);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 500;
-    transition: all 0.2s ease;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    transition: all 0.3s ease;
   }
 
-  .card-hint {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-top: auto;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--border);
-    opacity: 0.6;
-    transition: opacity 0.3s ease;
-  }
-
-  .card:hover .card-hint {
-    opacity: 1;
+  .card:hover .tag {
+    color: var(--text);
+    border-color: var(--text-muted);
+    background: transparent;
   }
 </style>

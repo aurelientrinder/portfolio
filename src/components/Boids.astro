@@ -1,0 +1,478 @@
+<canvas id="boids-canvas"></canvas>
+
+<script>
+  // Spatial Partitioning for O(N) performance instead of O(N^2)
+  class SpatialGrid {
+    cellSize: number;
+    cols: number = 0;
+    rows: number = 0;
+    buckets: number[][] = [];
+    width: number = 0;
+    height: number = 0;
+
+    constructor(cellSize: number) {
+      this.cellSize = cellSize;
+    }
+
+    updateDimensions(width: number, height: number) {
+      this.width = width;
+      this.height = height;
+      this.cols = Math.ceil(width / this.cellSize);
+      this.rows = Math.ceil(height / this.cellSize);
+      this.buckets = new Array(this.cols * this.rows).fill(0).map(() => []);
+    }
+
+    clear() {
+      for (let i = 0; i < this.buckets.length; i++) {
+        this.buckets[i].length = 0;
+      }
+    }
+
+    add(index: number, x: number, y: number) {
+      const col = Math.floor(x / this.cellSize);
+      const row = Math.floor(y / this.cellSize);
+      
+      // Handle edge cases where boids wrap/are slightly out of bounds
+      // We clamp to valid grid coordinates for storage
+      const validCol = Math.max(0, Math.min(col, this.cols - 1));
+      const validRow = Math.max(0, Math.min(row, this.rows - 1));
+      
+      const bucketIndex = validRow * this.cols + validCol;
+      this.buckets[bucketIndex].push(index);
+    }
+
+    // Get neighbors from current cell and 8 surrounding cells
+    getNeighbors(x: number, y: number, boids: any[]): any[] {
+      const col = Math.floor(x / this.cellSize);
+      const row = Math.floor(y / this.cellSize);
+      const neighbors: any[] = [];
+      
+      // Check 3x3 grid around the boid
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+          const neighborCol = col + i;
+          const neighborRow = row + j;
+
+          // Check bounds (with wrap-around awareness if needed, but for simplicity clamping/ignoring off-screen)
+          if (neighborCol >= 0 && neighborCol < this.cols && neighborRow >= 0 && neighborRow < this.rows) {
+            const bucketIndex = neighborRow * this.cols + neighborCol;
+            const bucket = this.buckets[bucketIndex];
+            for (let k = 0; k < bucket.length; k++) {
+              neighbors.push(boids[bucket[k]]);
+            }
+          }
+        }
+      }
+      return neighbors;
+    }
+  }
+
+  class Boid {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    maxSpeed: number;
+    maxForce: number;
+    
+    // Interaction
+    originalSize: number = 3;
+    currentSize: number = 3;
+    targetSize: number = 3;
+    collisionRadius: number = 6; // Hitbox size
+
+    constructor(width: number, height: number) {
+      this.x = Math.random() * width;
+      this.y = Math.random() * height;
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle);
+      this.vy = Math.sin(angle);
+      this.maxSpeed = 2;
+      this.maxForce = 0.05;
+    }
+
+    update(width: number, height: number, neighbors: Boid[], mouse: { x: number, y: number } | null, isMouseDown: boolean) {
+      // Adjust limits based on state
+      this.maxSpeed = isMouseDown ? 7 : 2;
+      this.maxForce = isMouseDown ? 0.2 : 0.05;
+
+      const separation = this.separation(neighbors);
+      const alignment = this.alignment(neighbors);
+      const cohesion = this.cohesion(neighbors);
+      const mouseForce = this.interact(mouse, isMouseDown);
+
+      // Weights
+      if (isMouseDown) {
+         // Vortex mode weights
+         this.vx += separation.x * 0.5 + alignment.x * 2.0 + cohesion.x * 2.0 + mouseForce.x * 8.0;
+         this.vy += separation.y * 0.5 + alignment.y * 2.0 + cohesion.y * 2.0 + mouseForce.y * 8.0;
+      } else {
+         // Normal weights
+         this.vx += separation.x * 1.5 + alignment.x * 1.0 + cohesion.x * 1.0 + mouseForce.x * 5.0;
+         this.vy += separation.y * 1.5 + alignment.y * 1.0 + cohesion.y * 1.0 + mouseForce.y * 5.0;
+      }
+
+      // Limit speed
+      const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+      if (speed > this.maxSpeed) {
+        this.vx = (this.vx / speed) * this.maxSpeed;
+        this.vy = (this.vy / speed) * this.maxSpeed;
+      }
+
+      this.x += this.vx;
+      this.y += this.vy;
+
+      // Wrap around screen
+      if (this.x < 0) this.x = width;
+      if (this.x > width) this.x = 0;
+      if (this.y < 0) this.y = height;
+      if (this.y > height) this.y = 0;
+      
+      // Resolve Collisions
+      this.resolveCollisions(neighbors);
+    }
+    
+    resolveCollisions(neighbors: Boid[]) {
+      const minDist = this.collisionRadius * 2; // Diameter
+      
+      for (const other of neighbors) {
+        if (other === this) continue;
+        
+        const dx = this.x - other.x;
+        const dy = this.y - other.y;
+        // Simple squared check first for perf
+        const distSq = dx * dx + dy * dy;
+        
+        if (distSq > 0 && distSq < minDist * minDist) {
+          const dist = Math.sqrt(distSq);
+          // Overlap amount
+          const overlap = minDist - dist;
+          
+          // Normalize
+          const nx = dx / dist;
+          const ny = dy / dist;
+          
+          // Position Correction (Push apart)
+          // Move each boid half the overlap distance
+          const correction = overlap * 0.5;
+          this.x += nx * correction;
+          this.y += ny * correction;
+          
+          // Note: We don't modify 'other' here because 'other' will do its own check 
+          // (or we do it but need to be careful about double application if not iterating unique pairs)
+          // For stability in this simple loop, modifying 'this' is safer.
+          
+          // Simple Elastic Bounce (Velocity Reflection)
+          // Not strictly physically accurate for boids but adds "solid" feel
+          const relVx = this.vx - other.vx;
+          const relVy = this.vy - other.vy;
+          const velAlongNormal = relVx * nx + relVy * ny;
+
+          // Do not resolve if velocities are separating
+          if (velAlongNormal > 0) continue;
+
+          // Restitution (bounciness) - keep it low for boids
+          const e = 0.2; 
+          
+          const j = -(1 + e) * velAlongNormal;
+          // Assuming equal mass
+          const impulseX = nx * j * 0.5;
+          const impulseY = ny * j * 0.5;
+          
+          this.vx += impulseX;
+          this.vy += impulseY;
+        }
+      }
+    }
+
+    draw(ctx: CanvasRenderingContext2D, color: string) {
+      const angle = Math.atan2(this.vy, this.vx);
+      
+      this.currentSize = this.currentSize * 0.9 + this.targetSize * 0.1;
+
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(angle);
+      
+      ctx.beginPath();
+      // Make them sharper/narrower when fast (warp effect)
+      const widthRatio = this.maxSpeed > 2 ? 0.6 : 1;
+      
+      ctx.moveTo(this.currentSize * 2, 0); // Nose
+      ctx.lineTo(-this.currentSize, -this.currentSize * widthRatio); // Back left
+      ctx.lineTo(-this.currentSize, this.currentSize * widthRatio); // Back right
+      ctx.closePath();
+      
+      ctx.fillStyle = color;
+      ctx.fill();
+      
+      ctx.restore();
+    }
+
+    interact(mouse: { x: number, y: number } | null, isMouseDown: boolean) {
+      if (!mouse) {
+        this.targetSize = this.originalSize;
+        return { x: 0, y: 0 };
+      }
+
+      const dx = this.x - mouse.x;
+      const dy = this.y - mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const interactRadius = 200;
+
+      if (isMouseDown) {
+         // VORTEX / ORBIT MODE
+         this.targetSize = 4;
+         
+         if (dist > 0) {
+             const orbitRadius = 150;
+             const radialStrength = 0.5; // Strength of pull/push to the orbit ring
+             const vortexStrength = 2.0; // Strength of rotation
+             
+             // Direction from boid to mouse
+             const dirX = dx / dist; // Normalized
+             const dirY = dy / dist; // Normalized
+             
+             // 1. Radial Force: Spring-like pull to the orbit radius
+             const radiusDiff = (dist - orbitRadius) / 100; // Scaled
+             
+             // Force vector pointing TO center
+             const radialX = -(dx / dist) * radiusDiff * radialStrength;
+             const radialY = -(dy / dist) * radiusDiff * radialStrength;
+
+             // 2. Tangential Force: Rotate around center
+             // Perpendicular to (dx, dy) is (-dy, dx)
+             const tangentX = (dy / dist) * vortexStrength;
+             const tangentY = -(dx / dist) * vortexStrength;
+             
+             return {
+                 x: radialX + tangentX,
+                 y: radialY + tangentY
+             };
+         }
+      } else if (dist < interactRadius) {
+        // Normal Repel Mode
+        this.targetSize = 6; 
+        
+        // Repel
+        const force = (interactRadius - dist) / interactRadius; // 0 to 1
+        return {
+          x: (dx / dist) * force * 0.1,
+          y: (dy / dist) * force * 0.1
+        };
+      }
+      
+      this.targetSize = this.originalSize;
+      return { x: 0, y: 0 };
+    }
+
+    // Flocking rules (Optimized to use neighbors)
+    separation(neighbors: Boid[]) {
+      const perceptionRadius = 25;
+      const steering = { x: 0, y: 0 };
+      let total = 0;
+
+      for (const other of neighbors) {
+        if (other === this) continue;
+        const d = this.distance(other);
+        
+        if (d < perceptionRadius && d > 0) {
+          const diff = { x: this.x - other.x, y: this.y - other.y };
+          // Weight by distance
+          steering.x += diff.x / (d * d);
+          steering.y += diff.y / (d * d);
+          total++;
+        }
+      }
+
+      if (total > 0) {
+        steering.x /= total;
+        steering.y /= total;
+         const len = Math.sqrt(steering.x * steering.x + steering.y * steering.y);
+         if (len > 0) {
+            steering.x = (steering.x / len) * this.maxForce;
+            steering.y = (steering.y / len) * this.maxForce;
+         }
+      }
+      return steering;
+    }
+
+    alignment(neighbors: Boid[]) {
+      const perceptionRadius = 50;
+      const steering = { x: 0, y: 0 };
+      let total = 0;
+
+      for (const other of neighbors) {
+        if (other === this) continue;
+        const d = this.distance(other);
+        
+        if (d < perceptionRadius) {
+          steering.x += other.vx;
+          steering.y += other.vy;
+          total++;
+        }
+      }
+
+      if (total > 0) {
+        steering.x /= total;
+        steering.y /= total;
+        const len = Math.sqrt(steering.x * steering.x + steering.y * steering.y);
+         if (len > 0) {
+            steering.x = (steering.x / len) * this.maxForce;
+            steering.y = (steering.y / len) * this.maxForce;
+         }
+      }
+      return steering;
+    }
+
+    cohesion(neighbors: Boid[]) {
+      const perceptionRadius = 50;
+      const steering = { x: 0, y: 0 };
+      let total = 0;
+
+      for (const other of neighbors) {
+        if (other === this) continue;
+        const d = this.distance(other);
+        if (d < perceptionRadius) {
+          steering.x += other.x;
+          steering.y += other.y;
+          total++;
+        }
+      }
+
+      if (total > 0) {
+        steering.x /= total;
+        steering.y /= total;
+        steering.x -= this.x;
+        steering.y -= this.y;
+         const len = Math.sqrt(steering.x * steering.x + steering.y * steering.y);
+         if (len > 0) {
+            steering.x = (steering.x / len) * this.maxForce;
+            steering.y = (steering.y / len) * this.maxForce;
+         }
+      }
+      return steering;
+    }
+
+    distance(other: Boid) {
+      const dx = this.x - other.x;
+      const dy = this.y - other.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+  }
+
+  // Setup simulation
+  const canvas = document.getElementById('boids-canvas') as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d');
+  
+  if (ctx) {
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Grid Setup
+    // Cell size should be at least max perception radius (50) + collision buffer
+    const grid = new SpatialGrid(60); 
+    grid.updateDimensions(width, height);
+    
+    let mouse = { x: -1000, y: -1000 };
+    let isMouseDown = false;
+
+    const boids: Boid[] = [];
+    const boidCount = 400;
+
+    for (let i = 0; i < boidCount; i++) {
+        boids.push(new Boid(width, height));
+    }
+
+    // Color management
+    let boidColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#666';
+    
+    // Observer for theme changes
+    const observer = new MutationObserver(() => {
+        boidColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
+    
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+         setTimeout(() => {
+             boidColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
+         }, 100);
+    });
+
+    window.addEventListener('resize', () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      grid.updateDimensions(width, height);
+    });
+    
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+    
+    window.addEventListener('mousedown', () => isMouseDown = true);
+    window.addEventListener('mouseup', () => isMouseDown = false);
+    
+    window.addEventListener('touchstart', (e) => {
+      isMouseDown = true;
+      mouse.x = e.touches[0].clientX;
+      mouse.y = e.touches[0].clientY;
+    });
+    window.addEventListener('touchend', () => {
+      isMouseDown = false;
+      mouse.x = -1000;
+    });
+    window.addEventListener('touchmove', (e) => {
+      mouse.x = e.touches[0].clientX;
+      mouse.y = e.touches[0].clientY;
+    });
+    
+    window.addEventListener('mouseleave', () => {
+      mouse.x = -1000;
+      mouse.y = -1000;
+      isMouseDown = false;
+    });
+
+    function animate() {
+      if (!ctx) return;
+      
+      ctx.clearRect(0, 0, width, height);
+      
+      // 1. Rebuild Grid
+      grid.clear();
+      for (let i = 0; i < boids.length; i++) {
+        grid.add(i, boids[i].x, boids[i].y);
+      }
+      
+      // 2. Update and Draw
+      for (const boid of boids) {
+          // Get local neighbors only
+          const neighbors = grid.getNeighbors(boid.x, boid.y, boids);
+          
+          boid.update(width, height, neighbors, mouse, isMouseDown);
+          boid.draw(ctx, boidColor);
+      }
+      
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  }
+</script>
+
+<style>
+  #boids-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Behind content, but verify vs global.css */
+    opacity: 0.1; /* Subtle styling */
+    pointer-events: none;
+  }
+</style>
