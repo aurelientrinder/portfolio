@@ -185,7 +185,7 @@
       }
     }
 
-    draw(ctx: CanvasRenderingContext2D, color: string) {
+    draw(ctx: CanvasRenderingContext2D, baseColor: string, accentColor: string) {
       const angle = Math.atan2(this.vy, this.vx);
       
       this.currentSize = this.currentSize * 0.9 + this.targetSize * 0.1;
@@ -203,8 +203,20 @@
       ctx.lineTo(-this.currentSize, this.currentSize * widthRatio); // Back right
       ctx.closePath();
       
-      ctx.fillStyle = color;
+      const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+      const speedRatio = Math.min(speed / 7, 1);
+
+      ctx.fillStyle = baseColor;
       ctx.fill();
+
+      if (speedRatio > 0.3) {
+         ctx.globalCompositeOperation = 'source-atop';
+         ctx.globalAlpha = speedRatio;
+         ctx.fillStyle = accentColor;
+         ctx.fill();
+         ctx.globalAlpha = 1.0;
+         ctx.globalCompositeOperation = 'source-over';
+      }
       
       ctx.restore();
     }
@@ -388,16 +400,19 @@
 
     // Color management
     let boidColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#666';
+    let accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#005cc5';
     
     // Observer for theme changes
     const observer = new MutationObserver(() => {
         boidColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
+        accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
     
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
          setTimeout(() => {
              boidColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
+             accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
          }, 100);
     });
 
@@ -440,7 +455,10 @@
     function animate() {
       if (!ctx) return;
       
-      ctx.clearRect(0, 0, width, height);
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+      ctx.fillRect(0, 0, width, height);
+      ctx.globalCompositeOperation = 'source-over';
       
       // 1. Rebuild Grid
       grid.clear();
@@ -454,7 +472,7 @@
           const neighbors = grid.getNeighbors(boid.x, boid.y, boids);
           
           boid.update(width, height, neighbors, mouse, isMouseDown);
-          boid.draw(ctx, boidColor);
+          boid.draw(ctx, boidColor, accentColor);
       }
       
       requestAnimationFrame(animate);

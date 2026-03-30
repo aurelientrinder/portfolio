@@ -25,7 +25,7 @@ const projectData = JSON.stringify({
 ---
 
 <article 
-  class="card glass animate-fade-in" 
+  class={`card glass animate-fade-in ${isAboveFold ? 'is-featured' : ''}`} 
   data-project={projectData}
   tabindex="0"
   role="button"
@@ -79,6 +79,69 @@ const projectData = JSON.stringify({
     cursor: pointer;
     user-select: none;
     background: var(--card-bg);
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    transform: skewX(-20deg);
+    transition: none;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .card::before {
+      background: linear-gradient(
+        to right,
+        transparent,
+        rgba(255, 255, 255, 0.05),
+        transparent
+      );
+    }
+  }
+
+  .card:hover::before {
+    animation: shimmer 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes shimmer {
+    0% { left: -150%; }
+    100% { left: 200%; }
+  }
+
+  @media (min-width: 769px) {
+    .card.is-featured {
+      flex-direction: row;
+      align-items: stretch;
+    }
+
+    .card.is-featured .card-images {
+      width: 55%;
+      padding: 1.5rem;
+      padding-right: 0;
+      flex-shrink: 0;
+    }
+    
+    .card.is-featured .img-wrapper {
+      height: 100%;
+    }
+
+    .card.is-featured .card-content {
+      width: 45%;
+      padding: 2.5rem;
+      justify-content: center;
+    }
   }
 
   .card:hover {
